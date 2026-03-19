@@ -35,16 +35,27 @@ const ProjectDetails = () => {
                 <ArrowLeft size={18} className="me-2" /> Back to Dashboard
             </Link>
 
-            {/* Project Header (Risk Badge Removed!) */}
+            {/* Project Header */}
             <div className="card shadow-lg border-0 bg-dark text-white rounded-4 mb-5" style={{ backgroundColor: 'rgba(33, 37, 41, 0.8) !important', backdropFilter: 'blur(10px)' }}>
                 <div className="card-body p-5 d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
                         <h1 className="display-4 fw-bolder mb-2 text-info" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>{project.name}</h1>
                         <p className="fs-5 text-light mb-0">📍 {project.location} | 👷 Engineer: {project.engineer_name || "Unassigned"}</p>
                     </div>
+                    
+                    {/* 👇 DYNAMIC BUDGET STATUS IN HEADER 👇 */}
                     <div className="text-end">
-                        <h3 className="text-success fw-bold mb-2">Remaining Budget: ${project.budget}</h3>
+                        <h3 className={`fw-bold mb-2 ${project.budget < 0 ? 'text-danger' : project.budget < 100000 ? 'text-warning' : 'text-success'}`}>
+                            Remaining Budget: ${project.budget}
+                        </h3>
+                        {/* Warning Badges */}
+                        {project.budget < 0 ? (
+                            <span className="badge bg-danger shadow-sm fs-5 px-3 py-2 rounded-pill">Budget Overrun 🚨</span>
+                        ) : project.budget < 100000 ? (
+                            <span className="badge bg-warning text-dark shadow-sm fs-5 px-3 py-2 rounded-pill">Low Budget ⚠️</span>
+                        ) : null}
                     </div>
+
                 </div>
             </div>
 
@@ -80,15 +91,13 @@ const ProjectDetails = () => {
 
                                 {/* Report Details Section */}
                                 <div className="card-body d-flex flex-column p-4">
-                                    
-                                    {/* 👇 UPDATED HEADER WITH RISK BADGE ADDED 👇 */}
                                     <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                                         <div className="d-flex gap-2">
                                             <span className="badge bg-primary rounded-pill py-2 px-3 fw-bold fs-6">
                                                 <Calendar size={14} className="me-1" /> {report.date}
                                             </span>
                                             
-                                            {/* NEW RISK BADGE FOR SPECIFIC REPORT */}
+                                            {/* Report Risk Badge */}
                                             <span className={`badge rounded-pill py-2 px-3 fw-bold fs-6 shadow-sm
                                                 ${report.risk_level === 'High Risk' ? 'bg-danger text-white' : 
                                                   report.risk_level === 'Low Risk' ? 'bg-success text-white' : 'bg-secondary text-white'}`}>
