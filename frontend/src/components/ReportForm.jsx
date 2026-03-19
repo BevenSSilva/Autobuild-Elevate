@@ -69,13 +69,15 @@ const ReportForm = ({ projectId, onReportAdded, onCancel }) => {
                 <form onSubmit={handleSubmit} className="row g-4">
                     
                     {/* Labor Count */}
+                   {/* Labor Count */}
                     <div className="col-12 col-md-6">
                         <label className="form-label text-light fw-semibold">Labor Count</label>
                         <div className="input-group shadow-sm">
                             <span className="input-group-text bg-secondary border-secondary text-white">
                                 <Users size={18} />
                             </span>
-                            <input type="number" name="labor_count" required
+                            {/* 👇 ADDED min="0" HERE 👇 */}
+                            <input type="number" name="labor_count" required min="0"
                                 className="form-control bg-dark text-light border-secondary focus-ring focus-ring-info"
                                 placeholder="e.g., 15"
                                 onChange={handleChange} />
@@ -83,13 +85,15 @@ const ReportForm = ({ projectId, onReportAdded, onCancel }) => {
                     </div>
 
                     {/* Cost Today */}
+                    {/* Cost Today */}
                     <div className="col-12 col-md-6">
                         <label className="form-label text-light fw-semibold">Cost Today ($)</label>
                         <div className="input-group shadow-sm">
                             <span className="input-group-text bg-secondary border-secondary text-white">
                                 <DollarSign size={18} />
                             </span>
-                            <input type="number" name="cost_today" required
+                            {/* 👇 ADDED min="0" HERE 👇 */}
+                            <input type="number" name="cost_today" required min="0"
                                 className="form-control bg-dark text-light border-secondary focus-ring focus-ring-info"
                                 placeholder="e.g., 5000"
                                 onChange={handleChange} />

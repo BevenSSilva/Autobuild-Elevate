@@ -47,16 +47,14 @@ const Dashboard = () => {
             {/* Bootstrap Grid System */}
             <div className="row g-4">
                 {projects
-                    /* 👇 THIS IS THE MAGIC LINE WE ADDED 👇 */
                     .filter(project => selectedProjectId === null || project.id === selectedProjectId)
                     .map((project) => (
                     <div key={project.id} className="col-12 col-md-6 col-lg-4">
                         
-                        {/* Bootstrap Card with dark transparent background */}
                         <div className="card h-100 shadow-lg border-0 bg-dark text-white rounded-4 overflow-hidden" style={{ backgroundColor: 'rgba(33, 37, 41, 0.8) !important', backdropFilter: 'blur(10px)' }}>
                             <div className="card-body d-flex flex-column p-4">
                                 
-                                {/* Header & Badge */}
+                                {/* Header & Risk Badge */}
                                 <div className="d-flex justify-content-between align-items-start mb-4">
                                     <div>
                                         <h3 className="card-title fw-bold mb-1">{project.name}</h3>
@@ -72,17 +70,38 @@ const Dashboard = () => {
 
                                 {/* Project Details inside a slightly lighter box */}
                                 <div className="bg-black bg-opacity-25 p-3 rounded-3 mb-4 mt-auto border border-secondary border-opacity-25">
-                                    <div className="d-flex justify-content-between mb-2">
+                                    
+                                    {/* 👇 MODIFIED BUDGET SECTION WITH WARNINGS 👇 */}
+                                    <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-50">
                                         <span className="text-light">💰 Budget Left:</span>
-                                        <span className="fw-bold text-success fs-5">${project.budget}</span>
+                                        <div className="text-end">
+                                            <span className={`fw-bold fs-5 d-block
+                                                ${project.budget < 0 ? 'text-danger' : project.budget < 100000 ? 'text-warning' : 'text-success'}`}>
+                                                ${project.budget}
+                                            </span>
+                                            {/* Logic for the warning badges */}
+                                            {project.budget < 0 ? (
+                                                <span className="badge bg-danger shadow-sm mt-1">Budget Overrun 🚨</span>
+                                            ) : project.budget < 100000 ? (
+                                                <span className="badge bg-warning text-dark shadow-sm mt-1">Low Budget ⚠️</span>
+                                            ) : null}
+                                        </div>
                                     </div>
+
                                     <div className="d-flex justify-content-between mb-2">
                                         <span className="text-light">📅 Deadline:</span>
                                         <span className="fw-semibold">{project.deadline}</span>
                                     </div>
+                                    
+                                    {/* 👇 NEW CLIENT DISPLAY 👇 */}
+                                    <div className="d-flex justify-content-between mb-2">
+                                        <span className="text-light">🤝 Client:</span>
+                                        <span className="fw-semibold text-info">{project.client_name || "Unassigned"}</span>
+                                    </div>
+
                                     <div className="d-flex justify-content-between">
                                         <span className="text-light">👷 Engineer:</span>
-                                        <span className="fw-semibold">{project.engineer_name || "Unassigned"}</span>
+                                        <span className="fw-semibold text-light">{project.engineer_name || "Unassigned"}</span>
                                     </div>
                                 </div>
 
