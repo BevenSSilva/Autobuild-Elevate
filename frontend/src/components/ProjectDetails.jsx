@@ -39,7 +39,7 @@ const ProjectDetails = () => {
             <div className="card shadow-lg border-0 bg-dark text-white rounded-4 mb-5" style={{ backgroundColor: 'rgba(17, 194, 138, 0.8) !important', backdropFilter: 'blur(10px)' }}>
                 <div className="card-body p-5 d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <h1 className="display-4 fw-bolder mb-2 text-info" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>{project.name}</h1>
+                        <h1 className="display-4 fw-bolder mb-2 text-info" style={{ textShadow: '2px 2px 4px rgba(7, 6, 6, 0.5)' }}>{project.name}</h1>
                         <p className="fs-5 text-light mb-0">📍 {project.location} | 👷 Engineer: {project.engineer_name || "Unassigned"}</p>
                     </div>
                     
