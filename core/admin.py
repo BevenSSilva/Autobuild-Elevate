@@ -21,4 +21,3 @@ class CustomUserAdmin(UserAdmin):
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Project)
 admin.site.register(DailyReport)
-# (Material register line is GONE)
