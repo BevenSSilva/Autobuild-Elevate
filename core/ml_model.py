@@ -29,13 +29,14 @@ class RiskPredictor:
             [10, 4, 80],  
             
             [10, 10, 10],
+            [2, 10, 10],
         ]
         
         y_train = [
             0, 0, 0, 0, 0, 0, 
             1, 1, 1,          
             1, 1, 1,          
-            1                 
+            1,0             
         ]
         
         self.model.fit(X_train, y_train)
