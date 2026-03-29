@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, Calendar, DollarSign, Users, CloudRain, AlertTriangle, Image as ImageIcon, Activity } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const ProjectDetails = () => {
+const ProjectDetails = ({ user }) => {
     const { id } = useParams();
     const [project, setProject] = useState(null);
     const [reports, setReports] = useState([]);
@@ -28,6 +29,13 @@ const ProjectDetails = () => {
     if (loading) return <div className="text-center mt-5 text-info fs-3 fw-bold spinner-border" role="status"></div>;
     if (!project) return <div className="text-center mt-5 text-white display-6">Project not found 😢</div>;
 
+    // Transform report data for the Admin Trajectory Chart
+    const chartData = [...reports].reverse().map(report => ({
+        date: report.date,
+        riskScore: report.risk_level === 'High Risk' ? 100 : report.risk_level === 'Halted by Client' ? 90 : 20,
+        riskLabel: report.risk_level
+    }));
+
     return (
         <div className="container py-4">
             {/* Back Button */}
@@ -36,28 +44,47 @@ const ProjectDetails = () => {
             </Link>
 
             {/* Project Header */}
-            <div className="card shadow-lg border-0 bg-dark text-white rounded-4 mb-5" style={{ backgroundColor: 'rgba(17, 194, 138, 0.8) !important', backdropFilter: 'blur(10px)' }}>
+            <div className="card shadow-lg border-0 bg-dark text-white rounded-4 mb-5" style={{ backgroundColor: 'rgba(33, 37, 41, 0.8) !important', backdropFilter: 'blur(10px)' }}>
                 <div className="card-body p-5 d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <h1 className="display-4 fw-bolder mb-2 text-info" style={{ textShadow: '2px 2px 4px rgba(7, 6, 6, 0.5)' }}>{project.name}</h1>
-                        <p className="fs-5 text-light mb-0">📍 {project.location} | 👷 Engineer: {project.engineer_name || "Unassigned"}</p>
+                        <h1 className="display-4 fw-bolder mb-2 text-info" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>{project.name}</h1>
+                        <p className="fs-5 text-light mb-0">📍 {project.location} | 👷 Engineer: {project.engineer_name || "Unassigned"} | 🤝 Client: {project.client_name || "Unassigned"}</p>
                     </div>
                     
-                    {/* 👇 DYNAMIC BUDGET STATUS IN HEADER 👇 */}
+                    {/* DYNAMIC BUDGET STATUS */}
                     <div className="text-end">
                         <h3 className={`fw-bold mb-2 ${project.budget < 0 ? 'text-danger' : project.budget < 100000 ? 'text-warning' : 'text-success'}`}>
                             Remaining Budget: ${project.budget}
                         </h3>
-                        {/* Warning Badges */}
                         {project.budget < 0 ? (
                             <span className="badge bg-danger shadow-sm fs-5 px-3 py-2 rounded-pill">Budget Overrun 🚨</span>
                         ) : project.budget < 100000 ? (
                             <span className="badge bg-warning text-dark shadow-sm fs-5 px-3 py-2 rounded-pill">Low Budget ⚠️</span>
                         ) : null}
                     </div>
-
                 </div>
             </div>
+
+            {/* ADMIN ONLY: PROJECT RISK TRAJECTORY CHART */}
+            {user?.role === 'ADMIN' && reports.length > 0 && (
+                <div className="card bg-dark border-info border-opacity-25 shadow-lg rounded-4 mb-5 p-4">
+                    <h3 className="text-white mb-4 fw-bold">📈 Project Risk Trajectory</h3>
+                    <div style={{ width: '100%', height: 300 }}>
+                        <ResponsiveContainer>
+                            <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                                <XAxis dataKey="date" stroke="#aaa" />
+                                <YAxis stroke="#aaa" domain={[0, 100]} ticks={[20, 100]} tickFormatter={(val) => val === 100 ? 'High' : 'Low'} />
+                                <Tooltip 
+                                    contentStyle={{ backgroundColor: '#222', borderColor: '#0dcaf0', borderRadius: '10px', color: '#fff' }}
+                                    formatter={(value, name, props) => [props.payload.riskLabel, "Risk Status"]}
+                                />
+                                <Line type="monotone" dataKey="riskScore" stroke="#0dcaf0" strokeWidth={3} dot={{ r: 6, fill: '#0dcaf0' }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
 
             <h2 className="text-white fw-bold border-bottom border-secondary pb-2 mb-4">
                 📋 Daily Report History
@@ -99,7 +126,7 @@ const ProjectDetails = () => {
                                             
                                             {/* Report Risk Badge */}
                                             <span className={`badge rounded-pill py-2 px-3 fw-bold fs-6 shadow-sm
-                                                ${report.risk_level === 'High Risk' ? 'bg-danger text-white' : 
+                                                ${report.risk_level === 'High Risk' || report.risk_level === 'Halted by Client' ? 'bg-danger text-white' : 
                                                   report.risk_level === 'Low Risk' ? 'bg-success text-white' : 'bg-secondary text-white'}`}>
                                                 <Activity size={14} className="me-1" /> {report.risk_level || 'Assessed'}
                                             </span>

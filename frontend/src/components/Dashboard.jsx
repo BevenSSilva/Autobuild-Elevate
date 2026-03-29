@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { AlertTriangle, CheckCircle, Plus, Eye } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Plus, Eye, Ban } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ReportForm from './ReportForm';
 
-const Dashboard = () => {
+const Dashboard = ({ user }) => {
     const [projects, setProjects] = useState([]);
     const [selectedProjectId, setSelectedProjectId] = useState(null);
 
@@ -18,21 +18,37 @@ const Dashboard = () => {
         fetchProjects();
     }, []);
 
+    const handleCallOffWork = async (projectId) => {
+        if(window.confirm("🚨 Are you sure you want to HALT all work for today? This will notify the team and mark the project as High Risk.")) {
+            try {
+                await axios.post(`http://127.0.0.1:8000/api/projects/${projectId}/call-off/`);
+                alert("Work has been officially called off for today.");
+                fetchProjects(); // Refresh dashboard to show new status
+            } catch (error) {
+                console.error(error);
+                alert("Failed to call off work. Please check the console.");
+            }
+        }
+    };
+
     return (
-        <div>
-            {/* TITLE SECTION WITH NEW PROJECT BUTTON */}
+        <div className="animate-fade-in-up">
+            {/* TITLE SECTION WITH ROLE-BASED NEW PROJECT BUTTON */}
             <div className="d-flex justify-content-between align-items-center mb-5">
                 <h1 className="display-4 fw-black text-white mb-0" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
                     Active Projects 🚀
                 </h1>
-                <Link to="/add-project" className="btn btn-info btn-lg fw-bold rounded-pill shadow d-flex align-items-center">
-                    <Plus size={24} className="me-2" /> New Project
-                </Link>
+                {/* ONLY ADMIN CAN SEE 'NEW PROJECT' */}
+                {user?.role === 'ADMIN' && (
+                    <Link to="/add-project" className="btn btn-info btn-lg fw-bold rounded-pill shadow d-flex align-items-center">
+                        <Plus size={24} className="me-2" /> New Project
+                    </Link>
+                )}
             </div>
             
             {/* Show Report Form if a project is selected */}
             {selectedProjectId && (
-                <div className="mb-5">
+                <div className="mb-5 animate-bounce-in">
                     <ReportForm 
                         projectId={selectedProjectId} 
                         onReportAdded={() => {
@@ -68,10 +84,10 @@ const Dashboard = () => {
                                     </span>
                                 </div>
 
-                                {/* Project Details inside a slightly lighter box */}
+                                {/* Project Details */}
                                 <div className="bg-black bg-opacity-25 p-3 rounded-3 mb-4 mt-auto border border-secondary border-opacity-25">
                                     
-                                    {/* 👇 MODIFIED BUDGET SECTION WITH WARNINGS 👇 */}
+                                    {/* BUDGET SECTION WITH WARNINGS */}
                                     <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-50">
                                         <span className="text-light">💰 Budget Left:</span>
                                         <div className="text-end">
@@ -79,7 +95,6 @@ const Dashboard = () => {
                                                 ${project.budget < 0 ? 'text-danger' : project.budget < 100000 ? 'text-warning' : 'text-success'}`}>
                                                 ${project.budget}
                                             </span>
-                                            {/* Logic for the warning badges */}
                                             {project.budget < 0 ? (
                                                 <span className="badge bg-danger shadow-sm mt-1">Budget Overrun 🚨</span>
                                             ) : project.budget < 100000 ? (
@@ -93,7 +108,6 @@ const Dashboard = () => {
                                         <span className="fw-semibold">{project.deadline}</span>
                                     </div>
                                     
-                                    {/* 👇 NEW CLIENT DISPLAY 👇 */}
                                     <div className="d-flex justify-content-between mb-2">
                                         <span className="text-light">🤝 Client:</span>
                                         <span className="fw-semibold text-info">{project.client_name || "Unassigned"}</span>
@@ -105,14 +119,28 @@ const Dashboard = () => {
                                     </div>
                                 </div>
 
-                                {/* Fancy Bootstrap Buttons */}
+                                {/* ROLE-BASED BUTTONS */}
                                 <div className="d-flex gap-2 mt-auto">
-                                    <button 
-                                        onClick={() => setSelectedProjectId(project.id)}
-                                        className="btn btn-primary flex-grow-1 fw-bold rounded-3 shadow d-flex justify-content-center align-items-center">
-                                        <Plus size={18} className="me-1" /> Report
-                                    </button>
                                     
+                                    {/* ADMIN AND ENGINEER CAN REPORT */}
+                                    {(user?.role === 'ADMIN' || user?.role === 'SITE_ENGINEER') && (
+                                        <button 
+                                            onClick={() => setSelectedProjectId(project.id)}
+                                            className="btn btn-primary flex-grow-1 fw-bold rounded-3 shadow d-flex justify-content-center align-items-center">
+                                            <Plus size={18} className="me-1" /> Report
+                                        </button>
+                                    )}
+
+                                    {/* CLIENT CAN CALL OFF WORK */}
+                                    {user?.role === 'CLIENT' && (
+                                        <button 
+                                            onClick={() => handleCallOffWork(project.id)}
+                                            className="btn btn-danger flex-grow-1 fw-bold rounded-3 shadow d-flex justify-content-center align-items-center">
+                                            <Ban size={18} className="me-1" /> Halt Work
+                                        </button>
+                                    )}
+                                    
+                                    {/* EVERYONE CAN SEE DETAILS */}
                                     <Link to={`/project/${project.id}`}
                                         className="btn btn-outline-info flex-grow-1 fw-bold rounded-3 shadow d-flex justify-content-center align-items-center">
                                         <Eye size={18} className="me-1" /> Details

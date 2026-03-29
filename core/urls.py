@@ -12,4 +12,6 @@ urlpatterns = [
     # Add these to your urlpatterns list in core/urls.py
     path('users/', views.get_users, name='get-users'),
     path('projects/add/', views.add_project, name='add-project'),
+    path('login/', views.login_user, name='login'),
+    path('projects/<int:pk>/call-off/', views.call_off_work, name='call-off-work'),
 ]

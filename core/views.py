@@ -1,3 +1,4 @@
+from django.contrib.auth import authenticate
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -62,3 +63,44 @@ def add_project(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# 8. Login User Endpoint
+@api_view(['POST'])
+def login_user(request):
+    username = request.data.get('username')
+    password = request.data.get('password')
+    user = authenticate(username=username, password=password)
+    
+    if user is not None:
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'role': user.role
+        })
+    return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
+# 9. Client "Call Off Work" Endpoint
+@api_view(['POST'])
+def call_off_work(request, pk):
+    try:
+        project = Project.objects.get(pk=pk)
+        
+        # We create a specific "Halted" report to freeze the project for the day
+        DailyReport.objects.create(
+            project=project,
+            labor_count=0,
+            weather_condition='Clear',
+            work_description='🚨 WORK OFFICIALLY CALLED OFF BY CLIENT.',
+            material_status='SUFFICIENT',
+            cost_today=0,
+            delay_hours=8, # Full day delay
+            risk_level='Halted by Client'
+        )
+        
+        # Optionally, force the project risk to "High Risk" due to the halt
+        project.risk_level = "High Risk"
+        project.save()
+        
+        return Response({'message': 'Work called off successfully.'})
+    except Project.DoesNotExist:
+        return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
