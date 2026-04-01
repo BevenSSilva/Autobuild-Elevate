@@ -96,7 +96,7 @@ const Dashboard = ({ user }) => {
                                                 ${project.budget}
                                             </span>
                                             {project.budget < 0 ? (
-                                                <span className="badge bg-danger shadow-sm mt-1">Budget Overrun 🚨</span>
+                                                <span className="badge bg-danger shadow-sm mt-1">Budget Overrun ‼️</span>
                                             ) : project.budget < 100000 ? (
                                                 <span className="badge bg-warning text-dark shadow-sm mt-1">Low Budget ⚠️</span>
                                             ) : null}
