@@ -116,8 +116,8 @@ const ReportForm = ({ projectId, onReportAdded, onCancel }) => {
                         </div>
                     </div>
 
-                    {/* Material Status */}
-                    <div className="col-12 col-md-6">
+                    {/* Material  Status */}
+                     <div className="col-12 col-md-6">
                         <label className="form-label text-light fw-semibold">Material Status</label>
                         <div className="input-group shadow-sm">
                             <span className="input-group-text bg-secondary border-secondary text-white">
