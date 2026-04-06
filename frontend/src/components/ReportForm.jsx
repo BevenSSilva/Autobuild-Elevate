@@ -59,7 +59,7 @@ const ReportForm = ({ projectId, onReportAdded, onCancel }) => {
     };
 
     return (
-        <div className="card shadow-lg border-info border-opacity-50 rounded-4 overflow-hidden" style={{ backgroundColor: 'rgba(33, 37, 41, 0.9) !important', backdropFilter: 'blur(12px)' }}>
+        <div className="card shadow-lg border-info border-opacity-50 rounded-4 overflow-hidden" style={{ backgroundColor: 'rgba(61, 73, 84, 0.9) !important', backdropFilter: 'blur(12px)' }}>
             <div className="card-body p-4 p-md-5 bg-dark text-white">
                 
                 <h3 className="card-title fw-bolder mb-4 d-flex align-items-center text-info">

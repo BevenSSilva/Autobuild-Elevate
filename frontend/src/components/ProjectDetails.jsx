@@ -27,7 +27,7 @@ const ProjectDetails = ({ user }) => {
     }, [id]);
 
     if (loading) return <div className="text-center mt-5 text-info fs-3 fw-bold spinner-border" role="status"></div>;
-    if (!project) return <div className="text-center mt-5 text-white display-6">Project not found 😢</div>;
+    if (!project) return <div className="text-center mt-5 text-white display-6">Project not found !</div>;
 
     // Transform report data for the Admin Trajectory Chart
     const chartData = [...reports].reverse().map(report => ({
@@ -44,10 +44,10 @@ const ProjectDetails = ({ user }) => {
             </Link>
 
             {/* Project Header */}
-            <div className="card shadow-lg border-0 bg-dark text-white rounded-4 mb-5" style={{ backgroundColor: 'rgba(33, 37, 41, 0.8) !important', backdropFilter: 'blur(10px)' }}>
+            <div className="card shadow-lg border-0 bg-dark text-white rounded-4 mb-5" style={{ backgroundColor: 'rgba(60, 72, 84, 0.8) !important', backdropFilter: 'blur(10px)' }}>
                 <div className="card-body p-5 d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <div>
-                        <h1 className="display-4 fw-bolder mb-2 text-info" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>{project.name}</h1>
+                        <h1 className="display-4 fw-bolder mb-2 text-info" style={{ textShadow: '2px 2px 4px rgba(50, 47, 47, 0.5)' }}>{project.name}</h1>
                         <p className="fs-5 text-light mb-0">📍 {project.location} | 👷 Engineer: {project.engineer_name || "Unassigned"} | 🤝 Client: {project.client_name || "Unassigned"}</p>
                     </div>
                     
@@ -65,7 +65,7 @@ const ProjectDetails = ({ user }) => {
                 </div>
             </div>
 
-            {/* ADMIN ONLY: PROJECT RISK TRAJECTORY CHART */}
+            {/* ADMIN ONLY: PROJECT RISKTRAJECTORY CHART */}
             {user?.role === 'ADMIN' && reports.length > 0 && (
                 <div className="card bg-dark border-info border-opacity-25 shadow-lg rounded-4 mb-5 p-4">
                     <h3 className="text-white mb-4 fw-bold">📈 Project Risk Trajectory</h3>

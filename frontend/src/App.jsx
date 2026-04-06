@@ -24,9 +24,9 @@ function App() {
 
   return (
     <Router>
-      <div className="min-vh-100" style={{ background: 'linear-gradient(135deg, #0f2027, #203a43, #2c5364)' }}>
+      <div className="min-vh-100" style={{ background: 'linear-gradient(135deg, #0d1e25ff, #294b57ff, #295568ff)' }}>
         
-        {/* Only show Navbar if logged in */}
+        {/* Only show Navbarif logged in */}
         {authUser && (
             <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg border-bottom border-info border-opacity-25 sticky-top">
               <div className="container">
