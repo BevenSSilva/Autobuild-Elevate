@@ -7,7 +7,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'role', 'phone']
 
-# 2. Project Serializer (To show project details)
+# 2. ProjectSerializer (To show project details)
 class ProjectSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.username', read_only=True)
     engineer_name = serializers.CharField(source='site_engineer.username', read_only=True)
