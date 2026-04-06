@@ -87,7 +87,7 @@ const Dashboard = ({ user }) => {
                                 {/* Project Details */}
                                 <div className="bg-black bg-opacity-25 p-3 rounded-3 mb-4 mt-auto border border-secondary border-opacity-25">
                                     
-                                    {/* BUDGET SECTION WITH WARNINGS */}
+                                    {/* BUDGET SECTIONWITH WARNINGS */}
                                     <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-50">
                                         <span className="text-light">💰 Budget Left:</span>
                                         <div className="text-end">
@@ -98,7 +98,7 @@ const Dashboard = ({ user }) => {
                                             {project.budget < 0 ? (
                                                 <span className="badge bg-danger shadow-sm mt-1">Budget Overrun ‼️</span>
                                             ) : project.budget < 100000 ? (
-                                                <span className="badge bg-warning text-dark shadow-sm mt-1">Low Budget ⚠️</span>
+                                                <span className="badge bg-warning text-dark shadow-sm mt-1">Low Budget ⚠️⚠️⚠️</span>
                                             ) : null}
                                         </div>
                                     </div>
