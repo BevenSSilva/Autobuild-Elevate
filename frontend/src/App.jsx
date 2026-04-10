@@ -24,7 +24,7 @@ function App() {
 
   return (
     <Router>
-      <div className="min-vh-100" style={{ background: 'linear-gradient(135deg, #0d1e25ff, #294b57ff, #295568ff)' }}>
+      <div className="min-vh-100" style={{ background: 'linear-gradient(135deg, #0d2029ff, #294b57ff, #295568ff)' }}>
         
         {/* Only show Navbarif logged in */}
         {authUser && (
