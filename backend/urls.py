@@ -9,7 +9,7 @@ def home(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('core.urls')),  # <--- CONNECTS YOUR NEW API
+    path('api/', include('core.urls')),  # <--- CONNECTSYOUR NEW API
     path('', home),
 ]
 

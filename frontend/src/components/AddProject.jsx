@@ -4,46 +4,44 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Building, MapPin, DollarSign, Calendar, Users, ArrowLeft } from 'lucide-react';
 
 const AddProject = () => {
-    const navigate = useNavigate(); // Used to redirect back to dashboard after saving
+    const navigate = useNavigate(); 
     const [clients, setClients] = useState([]);
     const [engineers, setEngineers] = useState([]);
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
-        name: '',
-        location: '',
-        client: '',
-        site_engineer: '',
-        start_date: '',
-        deadline: '',
-        budget: ''
+        name: '', location: '', client: '', site_engineer: '',
+        start_date: '', deadline: '', budget: ''
     });
 
-    // Fetch users when the page loads to fill the dropdowns
     useEffect(() => {
-        axios.get('http://127.0.0.1:8000/api/users/')
-            .then(response => {
-                const allUsers = response.data;
-                setClients(allUsers.filter(u => u.role === 'CLIENT'));
-                setEngineers(allUsers.filter(u => u.role === 'SITE_ENGINEER'));
-            })
-            .catch(error => console.error("Error fetching users:", error));
+        const token = localStorage.getItem('token'); 
+        axios.get('http://127.0.0.1:8000/api/users/', {
+            headers: { 'Authorization': `Token ${token}` } 
+        })
+        .then(response => {
+            const allUsers = response.data;
+            setClients(allUsers.filter(u => u.role && u.role.toUpperCase() === 'CLIENT'));
+            setEngineers(allUsers.filter(u => u.role && u.role.toUpperCase() === 'SITE_ENGINEER'));
+        })
+        .catch(error => console.error("Error fetching users:", error));
     }, []);
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+        const token = localStorage.getItem('token'); 
         try {
-            await axios.post('http://127.0.0.1:8000/api/projects/add/', formData);
+            await axios.post('http://127.0.0.1:8000/api/projects/add/', formData, {
+                headers: { 'Authorization': `Token ${token}` } 
+            });
             alert("Project Created Successfully! 🎉");
-            navigate('/'); // Send user back to dashboard
+            navigate('/'); 
         } catch (error) {
             console.error("Error creating project:", error.response?.data);
-            alert("Failed to create project. Check the console.");
+            alert("Failed to create project. Check your backend terminal for errors.");
         }
         setLoading(false);
     };
@@ -61,13 +59,11 @@ const AddProject = () => {
                     </h2>
 
                     <form onSubmit={handleSubmit} className="row g-4">
-                        {/* Project Name */}
                         <div className="col-md-6">
                             <label className="form-label text-light fw-semibold">Project Name</label>
                             <input type="text" name="name" required className="form-control bg-dark text-light border-secondary focus-ring focus-ring-info" onChange={handleChange} />
                         </div>
 
-                        {/* Location */}
                         <div className="col-md-6">
                             <label className="form-label text-light fw-semibold">Location</label>
                             <div className="input-group">
@@ -76,7 +72,6 @@ const AddProject = () => {
                             </div>
                         </div>
 
-                        {/* Client Dropdown */}
                         <div className="col-md-6">
                             <label className="form-label text-light fw-semibold">Assign Client</label>
                             <div className="input-group">
@@ -88,7 +83,6 @@ const AddProject = () => {
                             </div>
                         </div>
 
-                        {/* Engineer Dropdown */}
                         <div className="col-md-6">
                             <label className="form-label text-light fw-semibold">Assign Engineer</label>
                             <div className="input-group">
@@ -100,7 +94,6 @@ const AddProject = () => {
                             </div>
                         </div>
 
-                        {/* Start Date */}
                         <div className="col-md-6">
                             <label className="form-label text-light fw-semibold">Start Date</label>
                             <div className="input-group">
@@ -109,7 +102,6 @@ const AddProject = () => {
                             </div>
                         </div>
 
-                        {/* Deadline */}
                         <div className="col-md-6">
                             <label className="form-label text-light fw-semibold">Deadline</label>
                             <div className="input-group">
@@ -118,7 +110,6 @@ const AddProject = () => {
                             </div>
                         </div>
 
-                        {/* Budget */}
                         <div className="col-12">
                             <label className="form-label text-light fw-semibold">Total Budget ($)</label>
                             <div className="input-group">
@@ -127,7 +118,6 @@ const AddProject = () => {
                             </div>
                         </div>
 
-                        {/* Submit */}
                         <div className="col-12 mt-5">
                             <button type="submit" disabled={loading} className="btn btn-info w-100 fw-bold py-3 fs-5 rounded-pill shadow-lg transition">
                                 {loading ? 'Saving Project...' : 'Launch Project 🚀'}
@@ -139,5 +129,4 @@ const AddProject = () => {
         </div>
     );
 };
-
 export default AddProject;

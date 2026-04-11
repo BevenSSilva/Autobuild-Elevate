@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'corsheaders',      
     'rest_framework',
+    'rest_framework.authtoken',
     
     # Your apps
     'core',
@@ -102,11 +103,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
 
-# Media Files (Images Uploaded by Users)
+# MediaFiles (Images Uploaded by Users)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # CORS SETTINGS (Allows React to talk to Django)
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
+    "http://localhost:3000",
 ]
+# Tell Django REST Framework to use Token Authentication
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication', # Optional: Keeps the Django Admin interface working smoothly
+    ],
+}

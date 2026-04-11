@@ -1,156 +1,156 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { AlertTriangle, CheckCircle, Plus, Eye, Ban } from 'lucide-react';
+import { Plus, Ban, MapPin, Bell } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ReportForm from './ReportForm';
 
 const Dashboard = ({ user }) => {
     const [projects, setProjects] = useState([]);
     const [selectedProjectId, setSelectedProjectId] = useState(null);
+    const [alertMsg, setAlertMsg] = useState(null);
+    const userRole = user?.role?.toUpperCase() || '';
 
-    const fetchProjects = () => {
-        axios.get('http://127.0.0.1:8000/api/projects/')
-            .then(response => setProjects(response.data))
-            .catch(error => console.error("Error:", error));
+    const fetchProjects = (initial = false) => {
+        const token = localStorage.getItem('token'); 
+        axios.get('http://127.0.0.1:8000/api/projects/', { headers: { 'Authorization': `Token ${token}` } })
+            .then(res => {
+                if (!initial) {
+                    res.data.forEach(proj => {
+                        const old = projects.find(p => p.id === proj.id);
+                        if (old?.status === 'Halted' && proj.status === 'Active') {
+                            let msg = "";
+                            if (proj.last_action_by === 'ADMIN' && userRole === 'CLIENT') msg = "Admin has resumed the work";
+                            if (proj.last_action_by === 'CLIENT' && userRole === 'ADMIN') msg = "Client has resumed the work";
+                            if (msg) { setAlertMsg(msg); setTimeout(() => setAlertMsg(null), 5000); }
+                        }
+                    });
+                }
+                setProjects(res.data);
+            }).catch(err => console.error(err));
     };
 
-    useEffect(() => {
-        fetchProjects();
-    }, []);
+    useEffect(() => { fetchProjects(true); }, []);
 
-    const handleCallOffWork = async (projectId) => {
-        if(window.confirm("🚨 Are you sure you want to HALT all work for today? This will notify the team and mark the project as High Risk.")) {
+    const handleHalt = async (id) => {
+        if(window.confirm("🚨 Halt work?")) {
             try {
-                await axios.post(`http://127.0.0.1:8000/api/projects/${projectId}/call-off/`);
-                alert("Work has been officially called off for today.");
-                fetchProjects(); // Refresh dashboard to show new status
-            } catch (error) {
-                console.error(error);
-                alert("Failed to call off work. Please check the console.");
+                await axios.post(`http://127.0.0.1:8000/api/projects/${id}/call-off/`, {}, { 
+                    headers: { 'Authorization': `Token ${localStorage.getItem('token')}` } 
+                });
+                setProjects(prev => prev.map(p => p.id === id ? { ...p, status: 'Halted' } : p));
+            } catch (err) {
+                console.error(err);
+                alert("❌ Backend Error: Could not halt work.");
+            }
+        }
+    };
+
+    const handleResume = async (id) => {
+        if(window.confirm("✅ Resume work?")) {
+            try {
+                await axios.post(`http://127.0.0.1:8000/api/projects/${id}/resume/`, {}, { 
+                    headers: { 'Authorization': `Token ${localStorage.getItem('token')}` } 
+                });
+                setProjects(prev => prev.map(p => p.id === id ? { ...p, status: 'Active' } : p));
+            } catch (err) {
+                console.error(err);
+                alert("❌ Backend Error: Could not resume work.");
             }
         }
     };
 
     return (
         <div className="animate-fade-in-up">
-            {/* TITLE SECTION WITH ROLE-BASED NEW PROJECT BUTTON */}
+            {alertMsg && <div className="alert alert-info position-fixed top-0 start-50 translate-middle-x mt-4 shadow-lg z-3 rounded-pill fw-bold"><Bell size={18} className="me-2"/>{alertMsg}</div>}
+            
             <div className="d-flex justify-content-between align-items-center mb-5">
-                <h1 className="display-4 fw-black text-white mb-0" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
-                    Active Projects 🚀
-                </h1>
-                {/* ONLY ADMIN CAN SEE 'NEW PROJECT' */}
-                {user?.role === 'ADMIN' && (
-                    <Link to="/add-project" className="btn btn-info btn-lg fw-bold rounded-pill shadow d-flex align-items-center">
-                        <Plus size={24} className="me-2" /> New Project
+                <h1 className="display-4 fw-black text-white d-flex align-items-center">Active Projects 🚀</h1>
+                {userRole === 'ADMIN' && (
+                    <Link to="/add-project" className="btn btn-info rounded-pill fw-bold px-4 py-2 shadow-sm">
+                        New Project
                     </Link>
                 )}
             </div>
-            
-            {/* Show Report Form if a project is selected */}
+
             {selectedProjectId && (
-                <div className="mb-5 animate-bounce-in">
-                    <ReportForm 
-                        projectId={selectedProjectId} 
-                        onReportAdded={() => {
-                            setSelectedProjectId(null);
-                            fetchProjects();
-                        }}
-                        onCancel={() => setSelectedProjectId(null)}
-                    />
-                </div>
+                <ReportForm projectId={selectedProjectId} onCancel={() => setSelectedProjectId(null)} onReportAdded={() => { setSelectedProjectId(null); fetchProjects(); }} />
             )}
 
-            {/* Bootstrap Grid System */}
             <div className="row g-4">
-                {projects
-                    .filter(project => selectedProjectId === null || project.id === selectedProjectId)
-                    .map((project) => (
+                {projects.map((project) => {
+                    // 👇 NEW LOGIC: Safely parse the budget and determine colors/badges
+                    const budgetValue = Number(project.budget);
+                    const isOverrun = budgetValue < 0;
+                    const isLow = budgetValue >= 0 && budgetValue < 100000;
+                    
+                    return (
                     <div key={project.id} className="col-12 col-md-6 col-lg-4">
-                        
-                        <div className="card h-100 shadow-lg border-0 bg-dark text-white rounded-4 overflow-hidden" style={{ backgroundColor: 'rgba(33, 37, 41, 0.8) !important', backdropFilter: 'blur(10px)' }}>
-                            <div className="card-body d-flex flex-column p-4">
-                                
-                                {/* Header & Risk Badge */}
-                                <div className="d-flex justify-content-between align-items-start mb-4">
-                                    <div>
-                                        <h3 className="card-title fw-bold mb-1">{project.name}</h3>
-                                        <p className="text-info mb-0 fw-semibold">{project.location}</p>
-                                    </div>
-                                    
-                                    <span className={`badge rounded-pill py-2 px-3 d-flex align-items-center shadow
-                                        ${project.risk_level === 'High Risk' ? 'bg-danger' : 'bg-success'}`}>
-                                        {project.risk_level === 'High Risk' ? <AlertTriangle size={16} className="me-1"/> : <CheckCircle size={16} className="me-1"/>}
-                                        {project.risk_level}
-                                    </span>
+                        <div className="card h-100 shadow-lg border-0 bg-dark text-white rounded-4 overflow-hidden position-relative">
+                            
+                            {project.status === 'Halted' && (
+                                <div className="bg-danger text-white w-100 text-center py-2 fw-bolder shadow-sm">
+                                    <Ban size={18} className="me-2" /> WORK HALTED
                                 </div>
+                            )}
 
-                                {/* Project Details */}
-                                <div className="bg-black bg-opacity-25 p-3 rounded-3 mb-4 mt-auto border border-secondary border-opacity-25">
-                                    
-                                    {/* BUDGET SECTIONWITH WARNINGS */}
-                                    <div className="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary border-opacity-50">
-                                        <span className="text-light">💰 Budget Left:</span>
+                            <div className="card-body p-4 d-flex flex-column">
+                                <div className="d-flex justify-content-between align-items-start mb-4">
+                                    <h3 className="fw-bold mb-0">{project.name}</h3>
+                                    {project.risk_level !== 'Pending' && (
+                                        <span 
+                                            className={`badge rounded-pill d-flex align-items-center justify-content-center px-3 shadow-sm ${project.risk_level === 'High Risk' ? 'bg-danger' : 'bg-success'}`}
+                                            style={{ minHeight: '30px', letterSpacing: '0.5px' }}
+                                        >
+                                            {project.risk_level}
+                                        </span>
+                                    )}
+                                </div>
+                                
+                                <div className="bg-black bg-opacity-25 p-3 rounded-3 mb-4">
+                                    {/* BUDGET DISPLAY W/ BADGES */}
+                                    <div className="d-flex justify-content-between align-items-center mb-2">
+                                        <span className="text-light">💰 Budget:</span>
                                         <div className="text-end">
-                                            <span className={`fw-bold fs-5 d-block
-                                                ${project.budget < 0 ? 'text-danger' : project.budget < 100000 ? 'text-warning' : 'text-success'}`}>
+                                            <span className={`fw-bold ${isOverrun ? 'text-danger' : isLow ? 'text-warning' : 'text-success'}`}>
                                                 ${project.budget}
                                             </span>
-                                            {project.budget < 0 ? (
-                                                <span className="badge bg-danger shadow-sm mt-1">Budget Overrun ‼️</span>
-                                            ) : project.budget < 100000 ? (
-                                                <span className="badge bg-warning text-dark shadow-sm mt-1">Low Budget ⚠️⚠️⚠️</span>
-                                            ) : null}
+                                            {isOverrun && <div className="badge bg-danger ms-2 shadow-sm">Overrun ‼️</div>}
+                                            {isLow && <div className="badge bg-warning text-dark ms-2 shadow-sm">Low ⚠️</div>}
                                         </div>
                                     </div>
-
                                     <div className="d-flex justify-content-between mb-2">
-                                        <span className="text-light">📅 Deadline:</span>
-                                        <span className="fw-semibold">{project.deadline}</span>
-                                    </div>
-                                    
-                                    <div className="d-flex justify-content-between mb-2">
-                                        <span className="text-light">🤝 Client:</span>
-                                        <span className="fw-semibold text-info">{project.client_name || "Unassigned"}</span>
-                                    </div>
-
-                                    <div className="d-flex justify-content-between">
                                         <span className="text-light">👷 Engineer:</span>
-                                        <span className="fw-semibold text-light">{project.engineer_name || "Unassigned"}</span>
+                                        <span className="text-info">{project.engineer_name}</span>
+                                    </div>
+                                    <div className="d-flex justify-content-between">
+                                        <span className="text-light">📅 Deadline:</span>
+                                        <span>{project.deadline}</span>
                                     </div>
                                 </div>
 
-                                {/* ROLE-BASED BUTTONS */}
                                 <div className="d-flex gap-2 mt-auto">
-                                    
-                                    {/* ADMIN AND ENGINEER CAN REPORT */}
-                                    {(user?.role === 'ADMIN' || user?.role === 'SITE_ENGINEER') && (
-                                        <button 
-                                            onClick={() => setSelectedProjectId(project.id)}
-                                            className="btn btn-primary flex-grow-1 fw-bold rounded-3 shadow d-flex justify-content-center align-items-center">
-                                            <Plus size={18} className="me-1" /> Report
-                                        </button>
+                                    {project.status !== 'Halted' ? (
+                                        <>
+                                            {(userRole === 'ADMIN' || userRole === 'SITE_ENGINEER') && (
+                                                <button onClick={() => setSelectedProjectId(project.id)} className="btn btn-primary flex-grow-1 fw-bold rounded-3">Report</button>
+                                            )}
+                                            {(userRole === 'ADMIN' || userRole === 'CLIENT') && (
+                                                <button onClick={() => handleHalt(project.id)} className="btn btn-danger flex-grow-1 fw-bold rounded-3">Halt Work</button>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            {(userRole === 'ADMIN' || userRole === 'CLIENT') && (
+                                                <button onClick={() => handleResume(project.id)} className="btn btn-success flex-grow-1 fw-bold rounded-3">Resume</button>
+                                            )}
+                                        </>
                                     )}
-
-                                    {/* CLIENT CAN CALL OFF WORK */}
-                                    {user?.role === 'CLIENT' && (
-                                        <button 
-                                            onClick={() => handleCallOffWork(project.id)}
-                                            className="btn btn-danger flex-grow-1 fw-bold rounded-3 shadow d-flex justify-content-center align-items-center">
-                                            <Ban size={18} className="me-1" /> Halt Work
-                                        </button>
-                                    )}
-                                    
-                                    {/* EVERYONE CAN SEE DETAILS */}
-                                    <Link to={`/project/${project.id}`}
-                                        className="btn btn-outline-info flex-grow-1 fw-bold rounded-3 shadow d-flex justify-content-center align-items-center">
-                                        <Eye size={18} className="me-1" /> Details
-                                    </Link>
+                                    <Link to={`/project/${project.id}`} className="btn btn-outline-info flex-grow-1 fw-bold rounded-3">Details</Link>
                                 </div>
-                                
                             </div>
                         </div>
                     </div>
-                ))}
+                )})}
             </div>
         </div>
     );

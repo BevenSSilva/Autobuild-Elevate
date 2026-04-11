@@ -1,106 +1,110 @@
 from django.contrib.auth import authenticate
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.authtoken.models import Token  
 from .models import User, Project, DailyReport
 from .serializers import UserSerializer, ProjectSerializer, DailyReportSerializer
 
-# 1. Get All Projects (For the Dashboard)
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def project_list(request):
-    projects = Project.objects.all()
-    serializer = ProjectSerializer(projects, many=True)
-    return Response(serializer.data)
+    user = request.user
+    role = str(user.role).upper() 
+    if role in ['ADMIN', 'SITE_ENGINEER']:
+        projects = Project.objects.all()
+    elif role == 'CLIENT':
+        projects = Project.objects.filter(client=user)
+    else:
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    return Response(ProjectSerializer(projects, many=True).data)
 
-# 2. Add a New Report (The Button)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def project_stats(request):
+    user = request.user
+    role = str(user.role).upper()
+    base_query = Project.objects.all() if role in ['ADMIN', 'SITE_ENGINEER'] else Project.objects.filter(client=user)
+    return Response({'total': base_query.count(), 'high_risk': base_query.filter(risk_level='High Risk').count()})
+
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def call_off_work(request, pk):
+    try:
+        project = Project.objects.get(pk=pk)
+        role = str(request.user.role).upper()
+        if role != 'ADMIN' and project.client != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        project.status = "Halted"
+        project.last_action_by = role 
+        project.save()
+        return Response({'message': 'Halted'})
+    except Project.DoesNotExist: return Response(status=404)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def resume_work(request, pk):
+    try:
+        project = Project.objects.get(pk=pk)
+        role = str(request.user.role).upper()
+        if role != 'ADMIN' and project.client != request.user:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        project.status = "Active"
+        project.last_action_by = role 
+        project.save()
+        return Response({'message': 'Resumed'})
+    except Project.DoesNotExist: return Response(status=404)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_report(request):
+    project_id = request.data.get('project')
+    try:
+        project = Project.objects.get(pk=project_id)
+        if project.status == "Halted":
+            return Response({"error": "Site is halted. Cannot upload reports."}, status=status.HTTP_400_BAD_REQUEST)
+    except Project.DoesNotExist: return Response(status=404)
+
     serializer = DailyReportSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()  # This triggers the AI & Budget Logic in models.py automatically!
+        serializer.save() 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# 3. Get Project Stats (Optional but cool for dashboard)
 @api_view(['GET'])
-def project_stats(request):
-    total_projects = Project.objects.count()
-    high_risk_projects = Project.objects.filter(risk_level='High Risk').count()
-    return Response({
-        'total': total_projects,
-        'high_risk': high_risk_projects
-    })
-# ... (keep your existing code above) ...
-
-# 4. Get a Single Project's Details
-@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def project_detail(request, pk):
-    try:
-        project = Project.objects.get(pk=pk)
-        serializer = ProjectSerializer(project)
-        return Response(serializer.data)
-    except Project.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+    return Response(ProjectSerializer(Project.objects.get(pk=pk)).data)
 
-# 5. Get All Reports for a Specific Project
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def project_reports(request, pk):
-    # Fetch reports ordered by newest first
-    reports = DailyReport.objects.filter(project_id=pk).order_by('-id')
-    serializer = DailyReportSerializer(reports, many=True)
-    return Response(serializer.data)
-@api_view(['GET'])
-def get_users(request):
-    users = User.objects.all()
-    serializer = UserSerializer(users, many=True)
-    return Response(serializer.data)
+    return Response(DailyReportSerializer(DailyReport.objects.filter(project_id=pk).order_by('-id'), many=True).data)
 
-# 7. Create a New Project
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_users(request):
+    if str(request.user.role).upper() != 'ADMIN':
+        return Response(status=status.HTTP_403_FORBIDDEN)
+    return Response(UserSerializer(User.objects.all(), many=True).data)
+
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def add_project(request):
+    if str(request.user.role).upper() != 'ADMIN':
+        return Response(status=status.HTTP_403_FORBIDDEN)
     serializer = ProjectSerializer(data=request.data)
-    if serializer.is_valid():
+    if serializer.is_valid(): 
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# 8. Login User Endpoint
 @api_view(['POST'])
 def login_user(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
+    username, password = request.data.get('username'), request.data.get('password')
     user = authenticate(username=username, password=password)
-    
-    if user is not None:
-        return Response({
-            'id': user.id,
-            'username': user.username,
-            'role': user.role
-        })
+    if user:
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({'id': user.id, 'username': user.username, 'role': user.role, 'token': token.key})
     return Response({'error': 'Invalid Credentials'}, status=status.HTTP_400_BAD_REQUEST)
-
-# 9. Client "Call Off Work" Endpoint
-@api_view(['POST'])
-def call_off_work(request, pk):
-    try:
-        project = Project.objects.get(pk=pk)
-        
-        # We create a specific "Halted" report to freeze the project for the day
-        DailyReport.objects.create(
-            project=project,
-            labor_count=0,
-            weather_condition='Clear',
-            work_description='🚨 WORK OFFICIALLY CALLED OFF BY CLIENT.',
-            material_status='SUFFICIENT',
-            cost_today=0,
-            delay_hours=8, # Full day delay
-            risk_level='Halted by Client'
-        )
-        
-        # Optionally, force the project risk to "High Risk" due to the halt
-        project.risk_level = "High Risk"
-        project.save()
-        
-        return Response({'message': 'Work called off successfully.'})
-    except Project.DoesNotExist:
-        return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)

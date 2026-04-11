@@ -3,37 +3,35 @@ import { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import ProjectDetails from './components/ProjectDetails';
 import AddProject from './components/AddProject';
-import Login from './components/Login'; // <--- NEW IMPORT
-import { HardHat, Activity, LogOut } from 'lucide-react';
+import Login from './components/Login'; 
+import { HardHat, LogOut } from 'lucide-react';
 
 function App() {
   const [authUser, setAuthUser] = useState(null);
 
-  // Check if user is already logged in when app loads
   useEffect(() => {
     const loggedInUser = localStorage.getItem('user');
-    if (loggedInUser) {
+    const token = localStorage.getItem('token'); 
+    if (loggedInUser && token) {
         setAuthUser(JSON.parse(loggedInUser));
     }
   }, []);
 
   const handleLogout = () => {
       localStorage.removeItem('user');
+      localStorage.removeItem('token'); 
       setAuthUser(null);
   };
 
   return (
     <Router>
       <div className="min-vh-100" style={{ background: 'linear-gradient(135deg, #0d2029ff, #294b57ff, #295568ff)' }}>
-        
-        {/* Only show Navbarif logged in */}
         {authUser && (
             <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg border-bottom border-info border-opacity-25 sticky-top">
               <div className="container">
                 <Link to="/" className="navbar-brand d-flex align-items-center fs-3 fw-bolder text-info">
-                  <HardHat className="me-2 text-info" size={32} /> ConstructOS
+                  <HardHat className="me-2 text-info" size={32} /> AutoBuild Elevate
                 </Link>
-                
                 <div className="navbar-nav ms-auto d-flex flex-row align-items-center gap-3">
                   <span className="badge bg-secondary text-light fs-6">Role: {authUser.role}</span>
                   <button onClick={handleLogout} className="btn btn-sm btn-outline-danger d-flex align-items-center rounded-pill">
@@ -43,21 +41,19 @@ function App() {
               </div>
             </nav>
         )}
-
         <main className="container py-5">
           <Routes>
-            {/* If NOT logged in, force them to Login Page */}
             {!authUser ? (
                 <>
                     <Route path="/login" element={<Login setAuthUser={setAuthUser} />} />
                     <Route path="*" element={<Navigate to="/login" />} />
                 </>
             ) : (
-                /* If LOGGED IN, show the app */
                 <>
                     <Route path="/" element={<Dashboard user={authUser} />} />
                     <Route path="/project/:id" element={<ProjectDetails user={authUser} />} />
-                    {authUser.role === 'ADMIN' && <Route path="/add-project" element={<AddProject />} />}
+                    {/* 👇 ROLE CASING FIX 👇 */}
+                    {authUser.role.toUpperCase() === 'ADMIN' && <Route path="/add-project" element={<AddProject />} />}
                     <Route path="*" element={<Navigate to="/" />} />
                 </>
             )}
@@ -67,5 +63,4 @@ function App() {
     </Router>
   );
 }
-
 export default App;

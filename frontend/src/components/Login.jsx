@@ -1,52 +1,105 @@
 import { useState } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { HardHat } from 'lucide-react';
+import axios from 'axios';
+import { HardHat, AlertCircle } from 'lucide-react';
 
 const Login = ({ setAuthUser }) => {
-    const [credentials, setCredentials] = useState({ username: '', password: '' });
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleChange = (e) => setCredentials({ ...credentials, [e.target.name]: e.target.value });
-
-    const handleSubmit = async (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
         try {
-            const res = await axios.post('http://127.0.0.1:8000/api/login/', credentials);
-            // Save user to local storage and update app state
-            localStorage.setItem('user', JSON.stringify(res.data));
-            setAuthUser(res.data);
-            navigate('/'); // Go to dashboard
+            // Send credentials to your secure Django endpoint
+            const response = await axios.post('http://localhost:8000/api/login/', {
+                username: username,
+                password: password
+            });
+
+            // 1. Extract the data Django sends back (INCLUDING THE TOKEN!)
+            const { id, username: fetchedUser, role, token } = response.data;
+
+            // 2. Format the user profile object
+            const userProfile = { id, username: fetchedUser, role };
+
+            // 3. Save the Token AND the User Profile to localStorage
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(userProfile));
+
+            // 4. Update the main App.jsx state to trigger the Navbar and routing
+            setAuthUser(userProfile);
+
+            // 5. Send them instantly to the Dashboard
+            navigate('/');
+
         } catch (err) {
-            setError('Invalid username or password.');
+            console.error("Login failed:", err);
+            // If Django throws a 400 Bad Request, show this error
+            setError('Invalid username or password. Please try again.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="d-flex justify-content-center align-items-center vh-100">
-            <div className="card shadow-lg border-info border-opacity-50 rounded-4 p-5 bg-dark text-white" style={{ maxWidth: '400px', width: '100%' }}>
-                <div className="text-center mb-4">
-                    <HardHat size={48} className="text-info mb-2" />
-                    <h2 className="fw-bolder">ConstructOS</h2>
-                    <p className="text-secondary">Sign in to your account</p>
+        <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: '75vh' }}>
+            <div className="card shadow-lg border-0 rounded-4" style={{ width: '100%', maxWidth: '400px', backgroundColor: '#1a2e38' }}>
+                <div className="card-body p-5 text-light">
+                    
+                    <div className="text-center mb-4">
+                        <HardHat size={48} className="text-info mb-3" />
+                        <h3 className="fw-bolder">AutoBuild Elevate</h3>
+                        <p className="text-muted">Enter your credentials to continue</p>
+                    </div>
+
+                    {/* Error Alert */}
+                    {error && (
+                        <div className="alert alert-danger d-flex align-items-center py-2" role="alert">
+                            <AlertCircle size={18} className="me-2" />
+                            <small>{error}</small>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleLogin}>
+                        <div className="mb-3">
+                            <label className="form-label text-info fw-bold small">Username</label>
+                            <input 
+                                type="text" 
+                                className="form-control bg-dark text-light border-secondary" 
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required 
+                                autoFocus
+                            />
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="form-label text-info fw-bold small">Password</label>
+                            <input 
+                                type="password" 
+                                className="form-control bg-dark text-light border-secondary" 
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required 
+                            />
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            className="btn btn-info w-100 fw-bold rounded-pill text-dark"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Authenticating...' : 'Sign In'}
+                        </button>
+                    </form>
+
                 </div>
-                
-                {error && <div className="alert alert-danger py-2">{error}</div>}
-                
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-3">
-                        <label className="form-label text-light">Username</label>
-                        <input type="text" name="username" className="form-control bg-dark text-light border-secondary" onChange={handleChange} required />
-                    </div>
-                    <div className="mb-4">
-                        <label className="form-label text-light">Password</label>
-                        <input type="password" name="password" className="form-control bg-dark text-light border-secondary" onChange={handleChange} required />
-                    </div>
-                    <button type="submit" className="btn btn-info w-100 fw-bold rounded-pill shadow-lg py-2">
-                        Login 🚀
-                    </button>
-                </form>
             </div>
         </div>
     );
