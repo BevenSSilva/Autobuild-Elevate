@@ -83,22 +83,25 @@ const ProjectDetails = ({ user }) => {
             </div>
 
             <h3 className="text-white fw-bold mb-4">Daily Site Logs</h3>
-            <div className="row g-4 pb-5">{reports.map(r => (
-                <div key={r.id} className="col-md-6"><div className="card bg-dark text-light border-secondary border-opacity-25 p-4 rounded-4 h-100 shadow-sm">
-                    <div className="d-flex justify-content-between mb-4"><span className="text-info fw-bold">{new Date(r.date).toLocaleDateString()}</span><span className={`badge ${r.risk_level === 'High Risk' ? 'bg-danger' : 'bg-success'}`}>AI Risk: {r.risk_level}</span></div>
+            <div className="row g-3 pb-5">{reports.map(r => (
+                <div key={r.id} className="col-md-4 col-sm-6"><div className="card bg-dark text-light border-secondary border-opacity-25 p-3 rounded-4 h-100 shadow-sm">
+                    <div className="d-flex justify-content-between mb-3">
+                        <span className="text-info fw-bold small">{new Date(r.date).toLocaleDateString()}</span>
+                        <span className={`badge ${r.risk_level === 'High Risk' ? 'bg-danger' : 'bg-success'}`} style={{fontSize: '0.75rem'}}>AI Risk: {r.risk_level}</span>
+                    </div>
                     
-                    <div className="row g-2 mb-4 text-center">
-                        <div className="col-3"><div className="text-info small"><Users size={14}/> Labor</div><div className="fw-bold">{r.labor_count}</div></div>
-                        <div className="col-3 border-start border-secondary"><div className="text-info small"><Cloud size={14}/> Weather</div><div className="fw-bold">{r.weather_condition}</div></div>
-                        <div className="col-3 border-start border-secondary"><div className="text-info small"><Package size={14}/> Material</div><div className="fw-bold">{r.material_status}</div></div>
-                        <div className="col-3 border-start border-secondary"><div className="text-info small"><DollarSign size={14}/> Cost</div><div className="fw-bold text-success">${r.cost_today}</div></div>
+                    <div className="row g-1 mb-3 text-center">
+                        <div className="col-3"><div className="text-info" style={{fontSize: '0.7rem'}}><Users size={12}/> Labor</div><div className="fw-bold small">{r.labor_count}</div></div>
+                        <div className="col-3 border-start border-secondary"><div className="text-info" style={{fontSize: '0.7rem'}}><Cloud size={12}/> Weather</div><div className="fw-bold small">{r.weather_condition}</div></div>
+                        <div className="col-3 border-start border-secondary"><div className="text-info" style={{fontSize: '0.7rem'}}><Package size={12}/> Material</div><div className="fw-bold small">{r.material_status}</div></div>
+                        <div className="col-3 border-start border-secondary"><div className="text-info" style={{fontSize: '0.7rem'}}><DollarSign size={12}/> Cost</div><div className="fw-bold text-success small">${r.cost_today}</div></div>
                     </div>
 
-                    <div className="bg-black bg-opacity-25 p-3 rounded-3 mb-3">
-                        <div className="text-info small fw-bold mb-1"><Activity size={14} className="me-1"/> Work Log:</div>
-                        <p className="mb-0 text-white-50 font-monospace small">{r.work_description}</p>
+                    <div className="bg-black bg-opacity-25 p-2 rounded-3 mb-2">
+                        <div className="text-info fw-bold mb-1" style={{fontSize: '0.75rem'}}><Activity size={12} className="me-1"/> Work Log:</div>
+                        <p className="mb-0 text-white-50 font-monospace" style={{fontSize: '0.75rem'}}>{r.work_description}</p>
                     </div>
-                    {r.site_image && <img src={`http://127.0.0.1:8000${r.site_image}`} className="img-fluid rounded-3" style={{maxHeight:'200px', width:'100%', objectFit:'cover'}} />}
+                    {r.site_image && <img src={`http://127.0.0.1:8000${r.site_image}`} className="img-fluid rounded-3 mt-auto" style={{maxHeight:'120px', width:'100%', objectFit:'cover'}} />}
                 </div></div>
             ))}</div>
         </div>

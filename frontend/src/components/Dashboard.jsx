@@ -59,13 +59,19 @@ const Dashboard = ({ user }) => {
         }
     };
 
+    // 👇 NEW LOGIC: Determine which projects to show based on "Reporting Mode" 👇
+    const projectsToShow = selectedProjectId 
+        ? projects.filter(project => project.id === selectedProjectId) 
+        : projects;
+
     return (
         <div className="animate-fade-in-up">
             {alertMsg && <div className="alert alert-info position-fixed top-0 start-50 translate-middle-x mt-4 shadow-lg z-3 rounded-pill fw-bold"><Bell size={18} className="me-2"/>{alertMsg}</div>}
             
             <div className="d-flex justify-content-between align-items-center mb-5">
-                <h1 className="display-4 fw-black text-white d-flex align-items-center">Active Projects 🚀</h1>
-                {userRole === 'ADMIN' && (
+                <h1 className="display-4 fw-black text-white d-flex align-items-center">Active Projects : </h1>
+                {/* Hide the "New Project" button if we are in reporting mode to keep the screen clean */}
+                {userRole === 'ADMIN' && !selectedProjectId && (
                     <Link to="/add-project" className="btn btn-info rounded-pill fw-bold px-4 py-2 shadow-sm">
                         New Project
                     </Link>
@@ -76,15 +82,16 @@ const Dashboard = ({ user }) => {
                 <ReportForm projectId={selectedProjectId} onCancel={() => setSelectedProjectId(null)} onReportAdded={() => { setSelectedProjectId(null); fetchProjects(); }} />
             )}
 
-            <div className="row g-4">
-                {projects.map((project) => {
-                    // 👇 NEW LOGIC: Safely parse the budget and determine colors/badges
+            {/* 👇 Map over the filtered list instead of all projects 👇 */}
+            <div className={`row g-4 ${selectedProjectId ? 'justify-content-center' : ''}`}>
+                {projectsToShow.map((project) => {
                     const budgetValue = Number(project.budget);
                     const isOverrun = budgetValue < 0;
                     const isLow = budgetValue >= 0 && budgetValue < 100000;
                     
                     return (
-                    <div key={project.id} className="col-12 col-md-6 col-lg-4">
+                    // If reporting, center the single card and make it slightly wider. Otherwise, standard grid.
+                    <div key={project.id} className={selectedProjectId ? "col-12 col-md-8 col-lg-6" : "col-12 col-md-6 col-lg-4"}>
                         <div className="card h-100 shadow-lg border-0 bg-dark text-white rounded-4 overflow-hidden position-relative">
                             
                             {project.status === 'Halted' && (
@@ -107,7 +114,6 @@ const Dashboard = ({ user }) => {
                                 </div>
                                 
                                 <div className="bg-black bg-opacity-25 p-3 rounded-3 mb-4">
-                                    {/* BUDGET DISPLAY W/ BADGES */}
                                     <div className="d-flex justify-content-between align-items-center mb-2">
                                         <span className="text-light">💰 Budget:</span>
                                         <div className="text-end">
@@ -131,16 +137,16 @@ const Dashboard = ({ user }) => {
                                 <div className="d-flex gap-2 mt-auto">
                                     {project.status !== 'Halted' ? (
                                         <>
-                                            {(userRole === 'ADMIN' || userRole === 'SITE_ENGINEER') && (
+                                            {(userRole === 'ADMIN' || userRole === 'SITE_ENGINEER') && !selectedProjectId && (
                                                 <button onClick={() => setSelectedProjectId(project.id)} className="btn btn-primary flex-grow-1 fw-bold rounded-3">Report</button>
                                             )}
-                                            {(userRole === 'ADMIN' || userRole === 'CLIENT') && (
+                                            {(userRole === 'ADMIN' || userRole === 'CLIENT') && !selectedProjectId && (
                                                 <button onClick={() => handleHalt(project.id)} className="btn btn-danger flex-grow-1 fw-bold rounded-3">Halt Work</button>
                                             )}
                                         </>
                                     ) : (
                                         <>
-                                            {(userRole === 'ADMIN' || userRole === 'CLIENT') && (
+                                            {(userRole === 'ADMIN' || userRole === 'CLIENT') && !selectedProjectId && (
                                                 <button onClick={() => handleResume(project.id)} className="btn btn-success flex-grow-1 fw-bold rounded-3">Resume</button>
                                             )}
                                         </>
